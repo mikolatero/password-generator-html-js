@@ -99,22 +99,29 @@
       const lower = document.getElementById("lowerCase").checked;
       const number = document.getElementById("number").checked;
       const symbol = document.getElementById("symbol").checked;
-      if (upper + lower + number + symbol === 0) {
-        alert("Debes selecionar al menos un requisito");
+
+      if (!upper && !lower && !number && !symbol) {
+        alert("Debes seleccionar al menos un requisito");
         return;
       }
-      const passwordBox = document.getElementById("passwordBox");
-      const length = document.getElementById("length");
+
+      const funcs = [];
+      if (upper) funcs.push(getKey[0]);
+      if (lower) funcs.push(getKey[1]);
+      if (number) funcs.push(getKey[2]);
+      if (symbol) funcs.push(getKey[3]);
+
+      const desiredLength = parseInt(document.getElementById("length").value, 10);
       let password = "";
-      while (length.value > password.length) {
-        let keyToAdd = getKey[Math.floor(Math.random() * getKey.length)];
-        let isChecked = document.getElementById(keyToAdd.name).checked;
-        if (isChecked) {
-          password += keyToAdd();
-        }
+
+      for (let i = 0; i < desiredLength; i++) {
+        const fn = funcs[Math.floor(Math.random() * funcs.length)];
+        password += fn();
       }
-      passwordBox.innerHTML = password;
+
+      document.getElementById("passwordBox").textContent = password;
     }
+
     function copyPassword() {
       const textarea = document.createElement("textarea");
       const password = document.getElementById("passwordBox").innerText;

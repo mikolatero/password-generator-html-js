@@ -109,7 +109,7 @@
   </style>
 </head>
 
-<body onload="createPassword()">
+<body>
   <div id="toast-container"></div>
   <div class="container">
     <div class="password-generator">
@@ -136,11 +136,11 @@
             <option value="9">9</option>
             <option value="10">10</option>
             <option value="11">11</option>
-            <option value="12" selected="selected">12</option>
+            <option value="12">12</option>
             <option value="13">13</option>
             <option value="14">14</option>
             <option value="15">15</option>
-            <option value="16">16</option>
+            <option value="16" selected="selected">16</option>
           </optgroup>
           <optgroup label="Larga">
             <option value="17">17</option>
@@ -186,35 +186,29 @@
     </div>
   </div>
 
-  <script type="text/javascript" event="DOMContentLoaded">
-    const keys = {
-      upperCase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      lowerCase: "abcdefghijklmnopqrstuvwxyz",
-      number: "0123456789",
-      symbolAll: "!@#$%^&*()_+~`|}{[]:;?><,./-=",
-      symbolBasic: "!.@#_$"
-    };
-
-    const getKey = [
-      function upperCase() {
-        return keys.upperCase[Math.floor(Math.random() * keys.upperCase.length)];
-      },
-      function lowerCase() {
-        return keys.lowerCase[Math.floor(Math.random() * keys.lowerCase.length)];
-      },
-      function number() {
-        return keys.number[Math.floor(Math.random() * keys.number.length)];
-      },
-      function symbolAll() {
-        return keys.symbolAll[Math.floor(Math.random() * keys.symbolAll.length)];
-      },
-      function symbolBasic() {
-        return keys.symbolBasic[Math.floor(Math.random() * keys.symbolBasic.length)];
+  <script>
+    function showToast(msg, duration = 2500) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
       }
-    ];
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.add('show'));
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => toast.remove());
+      }, duration);
+    }
 
     function showToastNear(btn, msg, duration = 2000) {
-      const parent = btn.closest('.password');
+      const parent = btn.closest('.password') || document.body;
       const toast = document.createElement('div');
       toast.className = 'toast near';
       toast.textContent = msg;
@@ -228,52 +222,109 @@
       }, duration);
     }
 
-    function createPassword() {
-      const upper = document.getElementById("upperCase").checked;
-      const lower = document.getElementById("lowerCase").checked;
-      const number = document.getElementById("number").checked;
-      const symbolAll = document.getElementById("symbolAll").checked;
-      const symbolBasic = document.getElementById("symbolBasic").checked;
+    function randInt(max) {
+      const buf = new Uint32Array(1);
+      const lim = Math.floor(0x100000000 / max) * max;
+      do { crypto.getRandomValues(buf); } while (buf[0] >= lim);
+      return buf[0] % max;
+    }
+    function pick(str) { return str[randInt(str.length)]; }
 
-      if (!upper && !lower && !number && !symbolAll && !symbolBasic) {
+    const keys = {
+      upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      lower: "abcdefghijklmnopqrstuvwxyz",
+      number: "0123456789",
+      symbolAll: "!@#$%^&*()_+~`|}{[]:;?><,./-=",
+      symbolBasic: "!.@#_$"
+    };
+
+    function mergeUnique(...sets) {
+      return Array.from(new Set(sets.join(''))).join('');
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randInt(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function createPassword() {
+      const useUpper = document.getElementById("upperCase").checked;
+      const useLower = document.getElementById("lowerCase").checked;
+      const useNumber = document.getElementById("number").checked;
+      const useSymAll = document.getElementById("symbolAll")?.checked || false;
+      const useSymBasic = document.getElementById("symbolBasic")?.checked || false;
+
+      if (!useUpper && !useLower && !useNumber && !useSymAll && !useSymBasic) {
         showToast("Debes seleccionar al menos un requisito");
         return;
       }
 
-      const funcs = [];
-      if (upper) funcs.push(getKey[0]);
-      if (lower) funcs.push(getKey[1]);
-      if (number) funcs.push(getKey[2]);
-      if (symbolAll) funcs.push(getKey[3]);
-      if (symbolBasic) funcs.push(getKey[4]);
-
       const desiredLength = parseInt(document.getElementById("length").value, 10);
-      let password = "";
 
-      for (let i = 0; i < desiredLength; i++) {
-        const fn = funcs[Math.floor(Math.random() * funcs.length)];
-        password += fn();
+      const buckets = [];
+      if (useUpper) buckets.push(() => pick(keys.upper));
+      if (useLower) buckets.push(() => pick(keys.lower));
+      if (useNumber) buckets.push(() => pick(keys.number));
+      if (useSymAll) buckets.push(() => pick(keys.symbolAll));
+      if (useSymBasic) buckets.push(() => pick(keys.symbolBasic));
+
+      let pool = "";
+      if (useUpper) pool = mergeUnique(pool, keys.upper);
+      if (useLower) pool = mergeUnique(pool, keys.lower);
+      if (useNumber) pool = mergeUnique(pool, keys.number);
+      if (useSymAll) pool = mergeUnique(pool, keys.symbolAll);
+      if (useSymBasic) pool = mergeUnique(pool, keys.symbolBasic);
+
+      const chars = [];
+      buckets.forEach(fn => chars.push(fn()));
+
+      while (chars.length < desiredLength) {
+        chars.push(pool[randInt(pool.length)]);
       }
 
+      const password = shuffle(chars).join("");
       document.getElementById("passwordBox").textContent = password;
     }
 
-    const copyBtn = document.querySelector('.clipboard');
-    copyBtn.addEventListener('click', copyPassword);
-
-    function copyPassword(event) {
+    async function copyPassword(event) {
       const btn = event.currentTarget;
-      const textarea = document.createElement("textarea");
       const password = document.getElementById("passwordBox").innerText;
       if (!password) return;
-      textarea.value = password;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      textarea.remove();
-      showToastNear(btn, "¡Contraseña copiada!");
+
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(password);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = password;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        showToastNear(btn, "¡Contraseña copiada!");
+      } catch {
+        showToastNear(btn, "No se pudo copiar");
+      }
     }
 
+    document.addEventListener("DOMContentLoaded", () => {
+      const lengthSel = document.getElementById("length");
+      if (lengthSel && !lengthSel.value) lengthSel.value = "16";
+
+      const copyBtn = document.querySelector(".clipboard");
+      if (copyBtn) copyBtn.addEventListener("click", copyPassword);
+
+      createPassword();
+
+      ["upperCase","lowerCase","number","symbolAll","symbolBasic","length"]
+      .forEach(id => document.getElementById(id)?.addEventListener("change", createPassword));
+    });
+
+    window.createPassword = createPassword;
   </script>
 </body>
 

@@ -155,8 +155,12 @@
         </select>
       </div>
       <div>
-        <label for="symbol">Símbolos</label>
-        <input type="checkbox" id="symbol">
+        <label for="symbolAll">Símbolos (Todos)</label>
+        <input type="checkbox" id="symbolAll">
+      </div>
+      <div>
+        <label for="symbolBasic">Símbolos (Básicos)</label>
+        <input type="checkbox" id="symbolBasic" checked>
       </div>
       <div>
         <label for="number">Números</label>
@@ -179,8 +183,10 @@
       upperCase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
       lowerCase: "abcdefghijklmnopqrstuvwxyz",
       number: "0123456789",
-      symbol: "!@#$%^&*()_+~\`|}{[]:;?><,./-="
-    }
+      symbolAll: "!@#$%^&*()_+~`|}{[]:;?><,./-=",
+      symbolBasic: "!.@#_$"
+    };
+
     const getKey = [
       function upperCase() {
         return keys.upperCase[Math.floor(Math.random() * keys.upperCase.length)];
@@ -191,8 +197,11 @@
       function number() {
         return keys.number[Math.floor(Math.random() * keys.number.length)];
       },
-      function symbol() {
-        return keys.symbol[Math.floor(Math.random() * keys.symbol.length)];
+      function symbolAll() {
+        return keys.symbolAll[Math.floor(Math.random() * keys.symbolAll.length)];
+      },
+      function symbolBasic() {
+        return keys.symbolBasic[Math.floor(Math.random() * keys.symbolBasic.length)];
       }
     ];
 
@@ -215,9 +224,10 @@
       const upper = document.getElementById("upperCase").checked;
       const lower = document.getElementById("lowerCase").checked;
       const number = document.getElementById("number").checked;
-      const symbol = document.getElementById("symbol").checked;
+      const symbolAll = document.getElementById("symbolAll").checked;
+      const symbolBasic = document.getElementById("symbolBasic").checked;
 
-      if (!upper && !lower && !number && !symbol) {
+      if (!upper && !lower && !number && !symbolAll && !symbolBasic) {
         showToast("Debes seleccionar al menos un requisito");
         return;
       }
@@ -226,7 +236,8 @@
       if (upper) funcs.push(getKey[0]);
       if (lower) funcs.push(getKey[1]);
       if (number) funcs.push(getKey[2]);
-      if (symbol) funcs.push(getKey[3]);
+      if (symbolAll) funcs.push(getKey[3]);
+      if (symbolBasic) funcs.push(getKey[4]);
 
       const desiredLength = parseInt(document.getElementById("length").value, 10);
       let password = "";
@@ -257,5 +268,5 @@
 
   </script>
 </body>
-  
+
 </html>
